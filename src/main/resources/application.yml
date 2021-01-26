@@ -44,3 +44,19 @@ spring:
       authentication-database: admin
       username: root
       password: 65261599Duck
+
+# Mybatis配置
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  type-aliases-package: com.cunjun.personal.emos.wx.db.pojo
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+# 日志配置
+logging:
+  level:
+    root: info
+    com.cunjun.personal.emos.wx.db.dao: warn
+  pattern:
+    console: "%d{HH:mm:ss}  %-5level  %msg%n"
