@@ -60,3 +60,13 @@ logging:
     com.cunjun.personal.emos.wx.db.dao: warn
   pattern:
     console: "%d{HH:mm:ss}  %-5level  %msg%n"
+
+# Shiro和JWT配置
+emos:
+  jwt:
+    #密钥
+    secret: this-is-a-random-secret-for-emos-implemented-by-cunjun-1234567890
+    #令牌过期时间（天）
+    expire: 5
+    #令牌缓存时间（天数）
+    cache-expire: 10
