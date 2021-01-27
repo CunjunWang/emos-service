@@ -57,4 +57,5 @@ public class JWTUtil {
         JWTVerifier verifier = JWT.require(algorithm).build();
         verifier.verify(token);
     }
+
 }
