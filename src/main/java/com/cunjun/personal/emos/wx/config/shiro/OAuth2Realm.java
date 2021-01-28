@@ -1,5 +1,6 @@
 package com.cunjun.personal.emos.wx.config.shiro;
 
+import com.cunjun.personal.emos.wx.util.JWTUtil;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;

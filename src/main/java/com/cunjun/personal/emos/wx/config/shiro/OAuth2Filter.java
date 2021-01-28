@@ -4,6 +4,7 @@ package com.cunjun.personal.emos.wx.config.shiro;
 import cn.hutool.core.util.StrUtil;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.cunjun.personal.emos.wx.util.JWTUtil;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.shiro.authc.AuthenticationException;

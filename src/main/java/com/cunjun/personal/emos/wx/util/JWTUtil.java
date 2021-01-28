@@ -1,4 +1,4 @@
-package com.cunjun.personal.emos.wx.config.shiro;
+package com.cunjun.personal.emos.wx.util;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;

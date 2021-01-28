@@ -1,6 +1,6 @@
 package com.cunjun.personal.emos.wx.controller;
 
-import com.cunjun.personal.emos.wx.common.util.ResultData;
+import com.cunjun.personal.emos.wx.common.ResultData;
 import com.cunjun.personal.emos.wx.controller.form.TestSayHelloForm;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

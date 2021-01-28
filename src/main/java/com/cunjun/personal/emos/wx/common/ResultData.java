@@ -1,4 +1,4 @@
-package com.cunjun.personal.emos.wx.common.util;
+package com.cunjun.personal.emos.wx.common;
 
 import org.apache.http.HttpStatus;
 

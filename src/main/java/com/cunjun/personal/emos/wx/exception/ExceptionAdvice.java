@@ -1,4 +1,4 @@
-package com.cunjun.personal.emos.wx.config;
+package com.cunjun.personal.emos.wx.exception;
 
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import lombok.extern.slf4j.Slf4j;

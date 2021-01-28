@@ -1,6 +1,6 @@
 package com.cunjun.personal.emos.wx.aop;
 
-import com.cunjun.personal.emos.wx.common.util.ResultData;
+import com.cunjun.personal.emos.wx.common.ResultData;
 import com.cunjun.personal.emos.wx.config.shiro.ThreadLocalToken;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
