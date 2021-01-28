@@ -1,10 +1,11 @@
 package com.cunjun.personal.emos.wx.db.pojo;
 
 import java.io.Serializable;
+import java.util.Date;
 import lombok.Data;
 
 /**
- * sys_config
+ * tb_user
  * @author 
  */
 @Data
@@ -15,14 +16,59 @@ public class TbUser implements Serializable {
     private Integer id;
 
     /**
-     * 参数名
+     * 长期授权字符串
      */
-    private String paramKey;
+    private String openId;
 
     /**
-     * 参数值
+     * 昵称
      */
-    private String paramValue;
+    private String nickname;
+
+    /**
+     * 头像网址
+     */
+    private String photo;
+
+    /**
+     * 姓名
+     */
+    private String name;
+
+    /**
+     * 性别
+     */
+    private Object sex;
+
+    /**
+     * 手机号码
+     */
+    private String tel;
+
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
+     * 入职日期
+     */
+    private Date hiredate;
+
+    /**
+     * 角色
+     */
+    private Object role;
+
+    /**
+     * 是否是超级管理员
+     */
+    private Boolean root;
+
+    /**
+     * 部门编号
+     */
+    private Integer deptId;
 
     /**
      * 状态
@@ -30,9 +76,9 @@ public class TbUser implements Serializable {
     private Byte status;
 
     /**
-     * 备注
+     * 创建时间
      */
-    private String remark;
+    private Date createTime;
 
     private static final long serialVersionUID = 1L;
 }

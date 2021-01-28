@@ -3,88 +3,238 @@
 <mapper namespace="com.cunjun.personal.emos.wx.db.dao.TbUserDao">
     <resultMap id="BaseResultMap" type="com.cunjun.personal.emos.wx.db.pojo.TbUser">
         <id column="id" jdbcType="INTEGER" property="id"/>
-        <result column="param_key" jdbcType="VARCHAR" property="paramKey"/>
-        <result column="param_value" jdbcType="VARCHAR" property="paramValue"/>
+        <result column="open_id" jdbcType="VARCHAR" property="openId"/>
+        <result column="nickname" jdbcType="VARCHAR" property="nickname"/>
+        <result column="photo" jdbcType="VARCHAR" property="photo"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="sex" jdbcType="OTHER" property="sex"/>
+        <result column="tel" jdbcType="CHAR" property="tel"/>
+        <result column="email" jdbcType="VARCHAR" property="email"/>
+        <result column="hiredate" jdbcType="DATE" property="hiredate"/>
+        <result column="role" jdbcType="OTHER" property="role"/>
+        <result column="root" jdbcType="BOOLEAN" property="root"/>
+        <result column="dept_id" jdbcType="INTEGER" property="deptId"/>
         <result column="status" jdbcType="TINYINT" property="status"/>
-        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, param_key, param_value, `status`, remark
+        id, open_id, nickname, photo, `name`, sex, tel, email, hiredate, `role`, root, dept_id,
+    `status`, create_time
     </sql>
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
-        from sys_config
+        from tb_user
         where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="hasRootUser" resultType="java.lang.Boolean">
+        select if(count(*), true, false)
+        from tb_user
+        where root = 1;
+    </select>
+    <select id="searchIdByOpenId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select id
+        from tb_user
+        where open_id = #{openId, jdbcType=VARCHAR}
+          and status = 1;
     </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
-        from sys_config
+        from tb_user
         where id = #{id,jdbcType=INTEGER}
     </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbUser"
             useGeneratedKeys="true">
-        insert into sys_config (param_key, param_value, `status`,
-                                remark)
-        values (#{paramKey,jdbcType=VARCHAR}, #{paramValue,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT},
-                #{remark,jdbcType=VARCHAR})
+        insert into tb_user (open_id, nickname, photo,
+                             `name`, sex, tel, email,
+                             hiredate, `role`, root, dept_id,
+                             `status`, create_time)
+        values (#{openId,jdbcType=VARCHAR}, #{nickname,jdbcType=VARCHAR}, #{photo,jdbcType=VARCHAR},
+                #{name,jdbcType=VARCHAR}, #{sex,jdbcType=OTHER}, #{tel,jdbcType=CHAR}, #{email,jdbcType=VARCHAR},
+                #{hiredate,jdbcType=DATE}, #{role,jdbcType=OTHER}, #{root,jdbcType=BOOLEAN}, #{deptId,jdbcType=INTEGER},
+                #{status,jdbcType=TINYINT}, #{createTime,jdbcType=TIMESTAMP})
     </insert>
     <insert id="insertSelective" keyColumn="id" keyProperty="id"
             parameterType="com.cunjun.personal.emos.wx.db.pojo.TbUser" useGeneratedKeys="true">
-        insert into sys_config
+        insert into tb_user
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="paramKey != null">
-                param_key,
+            <if test="openId != null">
+                open_id,
             </if>
-            <if test="paramValue != null">
-                param_value,
+            <if test="nickname != null">
+                nickname,
+            </if>
+            <if test="photo != null">
+                photo,
+            </if>
+            <if test="name != null">
+                `name`,
+            </if>
+            <if test="sex != null">
+                sex,
+            </if>
+            <if test="tel != null">
+                tel,
+            </if>
+            <if test="email != null">
+                email,
+            </if>
+            <if test="hiredate != null">
+                hiredate,
+            </if>
+            <if test="role != null">
+                `role`,
+            </if>
+            <if test="root != null">
+                root,
+            </if>
+            <if test="deptId != null">
+                dept_id,
             </if>
             <if test="status != null">
                 `status`,
             </if>
-            <if test="remark != null">
-                remark,
+            <if test="createTime != null">
+                create_time,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="paramKey != null">
-                #{paramKey,jdbcType=VARCHAR},
+            <if test="openId != null">
+                #{openId,jdbcType=VARCHAR},
             </if>
-            <if test="paramValue != null">
-                #{paramValue,jdbcType=VARCHAR},
+            <if test="nickname != null">
+                #{nickname,jdbcType=VARCHAR},
+            </if>
+            <if test="photo != null">
+                #{photo,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="sex != null">
+                #{sex,jdbcType=OTHER},
+            </if>
+            <if test="tel != null">
+                #{tel,jdbcType=CHAR},
+            </if>
+            <if test="email != null">
+                #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="hiredate != null">
+                #{hiredate,jdbcType=DATE},
+            </if>
+            <if test="role != null">
+                #{role,jdbcType=OTHER},
+            </if>
+            <if test="root != null">
+                #{root,jdbcType=BOOLEAN},
+            </if>
+            <if test="deptId != null">
+                #{deptId,jdbcType=INTEGER},
             </if>
             <if test="status != null">
                 #{status,jdbcType=TINYINT},
             </if>
-            <if test="remark != null">
-                #{remark,jdbcType=VARCHAR},
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
             </if>
         </trim>
     </insert>
+    <insert id="insertNewUser" parameterType="HashMap">
+        insert into tb_user
+        set
+        <if test="openId!=null">
+            open_id = #{openId},
+        </if>
+        <if test="nickname!=null">
+            nickname = #{nickname},
+        </if>
+        <if test="photo!=null">
+            photo = #{photo},
+        </if>
+        <if test="name!=null">
+            name = #{name},
+        </if>
+        <if test="sex!=null">
+            sex = #{sex},
+        </if>
+        <if test="tel!=null">
+            tel = #{tel},
+        </if>
+        <if test="email!=null">
+            email=#{email},
+        </if>
+        <if test="hiredate!=null">
+            hiredate = #{hiredate},
+        </if>
+        role = #{role},
+        root = #{root},
+        <if test="deptName!=null">
+            dept_id = ( select id from tb_dept where dept_name = #{deptName} ),
+        </if>
+        status = #{status},
+        create_time = #{createTime}
+    </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbUser">
-        update sys_config
+        update tb_user
         <set>
-            <if test="paramKey != null">
-                param_key = #{paramKey,jdbcType=VARCHAR},
+            <if test="openId != null">
+                open_id = #{openId,jdbcType=VARCHAR},
             </if>
-            <if test="paramValue != null">
-                param_value = #{paramValue,jdbcType=VARCHAR},
+            <if test="nickname != null">
+                nickname = #{nickname,jdbcType=VARCHAR},
+            </if>
+            <if test="photo != null">
+                photo = #{photo,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                `name` = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="sex != null">
+                sex = #{sex,jdbcType=OTHER},
+            </if>
+            <if test="tel != null">
+                tel = #{tel,jdbcType=CHAR},
+            </if>
+            <if test="email != null">
+                email = #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="hiredate != null">
+                hiredate = #{hiredate,jdbcType=DATE},
+            </if>
+            <if test="role != null">
+                `role` = #{role,jdbcType=OTHER},
+            </if>
+            <if test="root != null">
+                root = #{root,jdbcType=BOOLEAN},
+            </if>
+            <if test="deptId != null">
+                dept_id = #{deptId,jdbcType=INTEGER},
             </if>
             <if test="status != null">
                 `status` = #{status,jdbcType=TINYINT},
             </if>
-            <if test="remark != null">
-                remark = #{remark,jdbcType=VARCHAR},
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
             </if>
         </set>
         where id = #{id,jdbcType=INTEGER}
     </update>
     <update id="updateByPrimaryKey" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbUser">
-        update sys_config
-        set param_key   = #{paramKey,jdbcType=VARCHAR},
-            param_value = #{paramValue,jdbcType=VARCHAR},
+        update tb_user
+        set open_id     = #{openId,jdbcType=VARCHAR},
+            nickname    = #{nickname,jdbcType=VARCHAR},
+            photo       = #{photo,jdbcType=VARCHAR},
+            `name`      = #{name,jdbcType=VARCHAR},
+            sex         = #{sex,jdbcType=OTHER},
+            tel         = #{tel,jdbcType=CHAR},
+            email       = #{email,jdbcType=VARCHAR},
+            hiredate    = #{hiredate,jdbcType=DATE},
+            `role`      = #{role,jdbcType=OTHER},
+            root        = #{root,jdbcType=BOOLEAN},
+            dept_id     = #{deptId,jdbcType=INTEGER},
             `status`    = #{status,jdbcType=TINYINT},
-            remark      = #{remark,jdbcType=VARCHAR}
+            create_time = #{createTime,jdbcType=TIMESTAMP}
         where id = #{id,jdbcType=INTEGER}
     </update>
 </mapper>
