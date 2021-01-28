@@ -10,12 +10,19 @@ server:
   servlet:
     context-path: /emos-wx-api
 
+# RestTemplate配置
+remote:
+  maxTotalConnect: 200
+  maxConnectPerRoute: 100
+  connectTimeout: 5000
+  readTimeout: 30000
+
 # 数据源配置
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
-      driver-class-name: com.mysql.jdbc.Driver
+      driver-class-name: com.mysql.cj.jdbc.Driver
       url: jdbc:mysql://localhost:3306/emos?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
       username: root
       password: 65261599Duck
