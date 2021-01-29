@@ -17,4 +17,9 @@ public interface IUserService {
      */
     Set<String> searchUserPermissions(Integer userId);
 
+    /**
+     * 用户登录
+     */
+    Integer login(String wxCode);
+
 }

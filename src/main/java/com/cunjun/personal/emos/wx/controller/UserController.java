@@ -2,6 +2,7 @@ package com.cunjun.personal.emos.wx.controller;
 
 import com.cunjun.personal.emos.wx.common.Constant;
 import com.cunjun.personal.emos.wx.common.ResultData;
+import com.cunjun.personal.emos.wx.controller.form.user.LoginForm;
 import com.cunjun.personal.emos.wx.controller.form.user.RegisterForm;
 import com.cunjun.personal.emos.wx.service.impl.UserService;
 import com.cunjun.personal.emos.wx.util.JWTUtil;
@@ -39,6 +40,18 @@ public class UserController {
         Set<String> permissionsSet = userService.searchUserPermissions(id);
         jwtUtil.cacheToken(token, id);
         return ResultData.ok("用户注册成功")
+                .put(Constant.RETURN_VALUE_TOKEN, token)
+                .put(Constant.RETURN_VALUE_PERMISSIONS, permissionsSet);
+    }
+
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    @ApiOperation(value = "用户登录")
+    public ResultData register(@Valid @RequestBody LoginForm form) {
+        Integer id = userService.login(form.getWxCode());
+        String token = jwtUtil.createToken(id);
+        Set<String> permissionsSet = userService.searchUserPermissions(id);
+        jwtUtil.cacheToken(token, id);
+        return ResultData.ok("用户登录成功")
                 .put(Constant.RETURN_VALUE_TOKEN, token)
                 .put(Constant.RETURN_VALUE_PERMISSIONS, permissionsSet);
     }

@@ -83,6 +83,22 @@ public class UserService implements IUserService {
     }
 
     /**
+     * 用户登录
+     */
+    @Override
+    public Integer login(String wxCode) {
+        String openId = getOpenId(wxCode);
+        Integer userId = userDao.searchIdByOpenId(openId);
+        if (userId == null) {
+            log.error("用户[{}]账户不存在", userId);
+            throw new EmosException("用户账户不存在");
+        }
+        log.info("用户[{}]执行登录", userId);
+        // TODO: 从消息队列中接收消息转移到消息表
+        return userId;
+    }
+
+    /**
      * 获取用户微信OpenID
      */
     private String getOpenId(String code) {
