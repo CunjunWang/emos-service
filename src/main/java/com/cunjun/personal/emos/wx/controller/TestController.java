@@ -13,11 +13,11 @@ import javax.validation.Valid;
  */
 @RestController
 @RequestMapping("/test")
-@Api("测试Web接口")
+@Api(value = "测试Web接口", description = "测试Web接口")
 public class TestController {
 
     @PostMapping("/sayHello")
-    @ApiOperation("最简单的测试方法")
+    @ApiOperation(value = "最简单的测试方法")
     public ResultData sayHello(@Valid @RequestBody TestSayHelloForm form) {
         return ResultData.ok().put("message", "Hello, " + form.getName());
     }

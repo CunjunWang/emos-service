@@ -38,6 +38,14 @@
         where open_id = #{openId, jdbcType=VARCHAR}
           and status = 1;
     </select>
+    <select id="searchUserPermissions" resultType="java.lang.String">
+        select distinct p.permission_name
+        from tb_user u
+                 join tb_role r on JSON_CONTAINS(u.role, CAST(r.id as char))
+                 join tb_permission p on JSON_CONTAINS(r.permissions, CAST(p.id as char))
+        where u.id = #{userId, jdbcType=INTEGER}
+          and u.status = 1;
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
         from tb_user

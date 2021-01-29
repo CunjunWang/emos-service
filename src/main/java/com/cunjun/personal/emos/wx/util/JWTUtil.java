@@ -9,10 +9,13 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by CunjunWang on 2021/1/27.
@@ -26,6 +29,12 @@ public class JWTUtil {
 
     @Value("${emos.jwt.expire}")
     private int expire;
+
+    @Value("${emos.jwt.cache-expire}")
+    private Integer cacheExpire;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 根据用户 ID 创建 JWT 令牌
@@ -57,5 +66,13 @@ public class JWTUtil {
         JWTVerifier verifier = JWT.require(algorithm).build();
         verifier.verify(token);
     }
+
+    /**
+     * 缓存用户登录令牌
+     */
+    public void cacheToken(String token, Integer userId) {
+        redisTemplate.opsForValue().set(token, userId + "", cacheExpire, TimeUnit.DAYS);
+    }
+
 
 }

@@ -1,9 +1,9 @@
 package com.cunjun.personal.emos.wx.exception;
 
-import com.cunjun.personal.emos.wx.exception.EmosException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * Created by CunjunWang on 2021/1/27.
  */
 @Slf4j
+@Component
 @RestControllerAdvice
 public class ExceptionAdvice {
 

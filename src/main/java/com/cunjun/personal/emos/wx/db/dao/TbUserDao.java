@@ -2,8 +2,9 @@ package com.cunjun.personal.emos.wx.db.dao;
 
 import com.cunjun.personal.emos.wx.db.pojo.TbUser;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-import java.util.HashMap;
+import java.util.Set;
 
 @Mapper
 public interface TbUserDao {
@@ -21,7 +22,7 @@ public interface TbUserDao {
 
     boolean hasRootUser();
 
-    int insertNewUser(HashMap param);
+    Integer searchIdByOpenId(@Param("openId") String openId);
 
-    Integer searchIdByOpenId(String openId);
+    Set<String> searchUserPermissions(@Param("userId") Integer userId);
 }
