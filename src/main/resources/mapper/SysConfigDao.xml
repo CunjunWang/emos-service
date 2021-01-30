@@ -17,6 +17,11 @@
         from sys_config
         where id = #{id,jdbcType=INTEGER}
     </select>
+    <select id="selectAllParam" resultMap="BaseResultMap">
+        select param_key, param_value
+        from sys_config
+        where status = 1;
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
         from sys_config

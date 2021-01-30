@@ -1,5 +1,6 @@
 package com.cunjun.personal.emos.wx.exception;
 
+import com.cunjun.personal.emos.wx.common.ResultData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.springframework.http.HttpStatus;
@@ -21,18 +22,21 @@ public class ExceptionAdvice {
     @ResponseBody
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public String exceptionHandler(Exception e) {
+    public ResultData exceptionHandler(Exception e) {
         log.error("执行异常, ", e);
-        if (e instanceof MethodArgumentNotValidException) {
-            MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
-            return exception.getBindingResult().getFieldError().getDefaultMessage();
-        } else if (e instanceof EmosException) {
-            return ((EmosException) e).getMsg();
-        } else if (e instanceof UnauthorizedException) {
-            return "不具备相关权限";
-        } else {
-            return "后端执行异常";
-        }
+        String msg;
+
+        if (e instanceof MethodArgumentNotValidException)
+            msg = ((MethodArgumentNotValidException) e)
+                    .getBindingResult().getFieldError().getDefaultMessage();
+        else if (e instanceof EmosException)
+            msg = ((EmosException) e).getMsg();
+        else if (e instanceof UnauthorizedException)
+            msg = "不具备相关权限";
+        else
+            msg = "后端执行异常";
+
+        return ResultData.ok(msg);
     }
 
 }

@@ -2,12 +2,14 @@ package com.cunjun.personal.emos.wx.db.pojo;
 
 import java.io.Serializable;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * sys_config
  * @author 
  */
 @Data
+@ToString
 public class SysConfig implements Serializable {
     /**
      * 主键
