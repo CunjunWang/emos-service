@@ -16,4 +16,6 @@ public interface TbWorkdayDao {
     int updateByPrimaryKeySelective(TbWorkday record);
 
     int updateByPrimaryKey(TbWorkday record);
+
+    Integer selectTodayIsWorkday();
 }

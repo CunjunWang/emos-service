@@ -14,4 +14,6 @@ public class Constant {
     /* 超级管理员的激活码 */
     public static final String ROOT_REGISTRATION_CODE = "000000";
 
+    public static final String CHECKIN_DAY_WORKDAY = "工作日";
+    public static final String CHECKIN_DAY_HOLIDAY = "节假日";
 }
