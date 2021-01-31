@@ -8,6 +8,8 @@ import com.cunjun.personal.emos.wx.service.impl.UserService;
 import com.cunjun.personal.emos.wx.util.JWTUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.Logical;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +56,13 @@ public class UserController {
         return ResultData.ok("用户登录成功")
                 .put(Constant.RETURN_VALUE_TOKEN, token)
                 .put(Constant.RETURN_VALUE_PERMISSIONS, permissionsSet);
+    }
+
+    @RequestMapping(method = RequestMethod.POST)
+    @ApiOperation(value = "添加用户")
+    @RequiresPermissions(value = {"ROOT", "USER:ADD"}, logical = Logical.OR)
+    public ResultData addUser() {
+        return ResultData.ok();
     }
 
 }

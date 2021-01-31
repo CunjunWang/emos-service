@@ -1,5 +1,7 @@
 package com.cunjun.personal.emos.wx.service.inf;
 
+import com.cunjun.personal.emos.wx.db.pojo.TbUser;
+
 import java.util.Set;
 
 /**
@@ -21,5 +23,10 @@ public interface IUserService {
      * 用户登录
      */
     Integer login(String wxCode);
+
+    /**
+     * 根据主键查询用户
+     */
+    TbUser selectValidUserById(Integer userId);
 
 }

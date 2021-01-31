@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -48,6 +49,7 @@ public class UserService implements IUserService {
      * 注册新用户
      */
     @Override
+    @Transactional
     public Integer registerUser(String wxCode, String registrationCode, String nickname, String avatarUrl) {
         if (Constant.ROOT_REGISTRATION_CODE.equals(registrationCode)) {
             boolean hasRootUser = userDao.hasRootUser();
@@ -96,6 +98,17 @@ public class UserService implements IUserService {
         log.info("用户[{}]执行登录", userId);
         // TODO: 从消息队列中接收消息转移到消息表
         return userId;
+    }
+
+    /**
+     * 根据主键查询用户
+     *
+     * @param userId
+     */
+    @Override
+    public TbUser selectValidUserById(Integer userId) {
+        log.info("根据主键[{}]查询用户", userId);
+        return userDao.selectValidUserById(userId);
     }
 
     /**

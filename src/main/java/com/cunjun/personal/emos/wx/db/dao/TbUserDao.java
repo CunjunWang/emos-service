@@ -22,6 +22,8 @@ public interface TbUserDao {
 
     boolean hasRootUser();
 
+    TbUser selectValidUserById(@Param("userId") Integer userId);
+
     Integer searchIdByOpenId(@Param("openId") String openId);
 
     Set<String> searchUserPermissions(@Param("userId") Integer userId);
