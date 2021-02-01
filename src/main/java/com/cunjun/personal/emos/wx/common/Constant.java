@@ -16,4 +16,6 @@ public class Constant {
 
     public static final String CHECKIN_DAY_WORKDAY = "工作日";
     public static final String CHECKIN_DAY_HOLIDAY = "节假日";
+    public static final String FACE_MODEL_CANNOT_RECOGNIZE = "无法识别出人脸";
+    public static final String FACE_MODEL_MULTIPLE_FACES = "照片中存在多张人脸";
 }

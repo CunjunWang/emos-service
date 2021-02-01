@@ -61,6 +61,7 @@ public class CheckinController {
         if (!filename.endsWith(".jpg"))
             return ResultData.error("必须提交JPG格式图片");
         String tempPath = tempImageFolder + "/" + filename;
+        log.info("checkin提交的图片路径: {}", tempPath);
         try {
             file.transferTo(Paths.get(tempPath));
             HashMap<String, Object> param = new HashMap<>();
@@ -73,6 +74,32 @@ public class CheckinController {
             param.put("address", form.getAddress());
             checkinService.checkin(param);
             return ResultData.ok("签到成功");
+        } catch (IOException ioe) {
+            log.error(ioe.getMessage(), ioe);
+            throw new EmosException("图片保存错误");
+        } finally {
+            // 删除上传的临时自拍
+            FileUtil.del(tempPath);
+        }
+    }
+
+    @RequestMapping(value = "/faceModel", method = RequestMethod.POST)
+    @ApiOperation(value = "创建人脸模型")
+    public ResultData createFaceModel(
+            @RequestParam(name = "photo") MultipartFile file,
+            @RequestHeader("token") String token) {
+        if (file == null)
+            return ResultData.error("没有上传文件");
+        Integer userId = jwtUtil.getUserId(token);
+        String filename = file.getOriginalFilename().toLowerCase();
+        if (!filename.endsWith(".jpg"))
+            return ResultData.error("必须提交JPG格式图片");
+        String tempPath = tempImageFolder + "/" + filename;
+        log.info("createFaceModel提交的图片路径: {}", tempPath);
+        try {
+            file.transferTo(Paths.get(tempPath));
+            checkinService.createFaceModel(userId, tempPath);
+            return ResultData.ok("人脸建模成功");
         } catch (IOException ioe) {
             log.error(ioe.getMessage(), ioe);
             throw new EmosException("图片保存错误");

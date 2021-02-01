@@ -80,4 +80,4 @@ emos:
   face:
     create-face-model-url: http://localhost:3000/create_face_model
     checkin-url: http://localhost:3000/checkin
-  temp-image-folder: classpath:tmp
+  temp-image-folder: /Users/CunjunWang/Desktop/tmp

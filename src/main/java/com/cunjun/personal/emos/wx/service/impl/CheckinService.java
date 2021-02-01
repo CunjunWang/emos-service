@@ -3,22 +3,26 @@ package com.cunjun.personal.emos.wx.service.impl;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.http.HttpUtil;
 import com.cunjun.personal.emos.wx.common.Constant;
 import com.cunjun.personal.emos.wx.common.SystemConstants;
 import com.cunjun.personal.emos.wx.db.dao.TbCheckinDao;
 import com.cunjun.personal.emos.wx.db.dao.TbFaceModelDao;
 import com.cunjun.personal.emos.wx.db.dao.TbHolidaysDao;
 import com.cunjun.personal.emos.wx.db.dao.TbWorkdayDao;
+import com.cunjun.personal.emos.wx.db.pojo.TbCheckin;
+import com.cunjun.personal.emos.wx.db.pojo.TbFaceModel;
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import com.cunjun.personal.emos.wx.service.inf.ICheckinService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
@@ -30,6 +34,7 @@ import java.util.HashMap;
 @Slf4j
 @Service
 @Scope("prototype")
+@PropertySource(value = {"classpath:application.yml", "classpath:secret.properties"})
 public class CheckinService implements ICheckinService {
 
     @Value("${emos.face.create-face-model-url}")
@@ -37,6 +42,9 @@ public class CheckinService implements ICheckinService {
 
     @Value("${emos.face.checkin-url}")
     private String checkinUrl;
+
+    @Value("${course.icode}")
+    private String apiCode;
 
     @Autowired
     private TbHolidaysDao holidaysDao;
@@ -113,14 +121,48 @@ public class CheckinService implements ICheckinService {
             log.warn("不存在员工[{}]的人脸模型", userId);
             throw new EmosException("不存在人脸模型");
         }
-        // TODO
         String path = (String) param.get("path");
-        log.info("照片路径: {}", path);
-        MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
-        request.add("photo", FileUtil.file(path));
-        request.add("targetModel", faceModel);
-        String resp = restTemplate.postForObject(checkinUrl, request, String.class);
-        log.info("{}", resp);
+        HttpRequest request = HttpUtil.createPost(checkinUrl);
+        request.form("photo", FileUtil.file(path), "targetModel", faceModel);
+        request.form("code", apiCode);
+        HttpResponse response = request.execute();
+        if (response.getStatus() != 200) {
+            log.error("人脸识别服务异常");
+            throw new EmosException("人脸识别服务异常");
+        }
+        String body = response.body();
+        if (Constant.FACE_MODEL_CANNOT_RECOGNIZE.equals(body) ||
+                Constant.FACE_MODEL_MULTIPLE_FACES.equals(body)) {
+            throw new EmosException(body);
+        } else if ("False".equals(body)) {
+            throw new EmosException("签到无效, 非本人签到");
+        } else if ("True".equals(body)) {
+            // TODO: 获取签到地区新冠疫情风险等级
+            TbCheckin record = new TbCheckin();
+        }
+    }
+
+    /**
+     * 创建人脸识别模型
+     */
+    @Override
+    public void createFaceModel(Integer userId, String photoPath) {
+        log.info("创建用户[{}]人脸识别模型", userId);
+        HttpRequest request = HttpUtil.createPost(createFaceModelUrl);
+        request.form("photo", FileUtil.file(photoPath));
+        request.form("code", apiCode);
+        HttpResponse response = request.execute();
+        String body = response.body();
+        if (Constant.FACE_MODEL_CANNOT_RECOGNIZE.equals(body) ||
+                Constant.FACE_MODEL_MULTIPLE_FACES.equals(body)) {
+            log.error(body);
+            throw new EmosException(body);
+        }
+        // 创建人脸模型
+        TbFaceModel model = new TbFaceModel();
+        model.setUserId(userId);
+        model.setFaceModel(body);
+        faceModelDao.insertSelective(model);
     }
 
 }

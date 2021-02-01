@@ -15,5 +15,10 @@ public interface ICheckinService {
     /**
      * 用户签到
      */
-    void checkin(HashMap<String, Object>  param);
+    void checkin(HashMap<String, Object> param);
+
+    /**
+     * 创建人脸识别模型
+     */
+    void createFaceModel(Integer userId, String photoPath);
 }
