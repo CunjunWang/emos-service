@@ -36,7 +36,7 @@ public class ExceptionAdvice {
         else
             msg = "后端执行异常";
 
-        return ResultData.ok(msg);
+        return ResultData.error(msg);
     }
 
 }

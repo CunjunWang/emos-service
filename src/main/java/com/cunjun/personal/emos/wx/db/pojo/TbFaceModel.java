@@ -1,38 +1,32 @@
 package com.cunjun.personal.emos.wx.db.pojo;
 
 import java.io.Serializable;
+
 import lombok.Data;
+import lombok.ToString;
 
 /**
- * sys_config
- * @author 
+ * tb_face_model
+ *
+ * @author
  */
 @Data
+@ToString
 public class TbFaceModel implements Serializable {
     /**
-     * 主键
+     * 主键值
      */
     private Integer id;
 
     /**
-     * 参数名
+     * 用户ID
      */
-    private String paramKey;
+    private Integer userId;
 
     /**
-     * 参数值
+     * 用户人脸模型
      */
-    private String paramValue;
-
-    /**
-     * 状态
-     */
-    private Byte status;
-
-    /**
-     * 备注
-     */
-    private String remark;
+    private String faceModel;
 
     private static final long serialVersionUID = 1L;
 }

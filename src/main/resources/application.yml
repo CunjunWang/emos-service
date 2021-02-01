@@ -68,7 +68,7 @@ logging:
   pattern:
     console: "%d{HH:mm:ss}  %-5level  %msg%n"
 
-# Shiro和JWT配置
+# 应用程序配置
 emos:
   jwt:
     #密钥
@@ -77,3 +77,7 @@ emos:
     expire: 5
     #令牌缓存时间（天数）
     cache-expire: 10
+  face:
+    create-face-model-url: http://localhost:3000/create_face_model
+    checkin-url: http://localhost:3000/checkin
+  temp-image-folder: classpath:tmp

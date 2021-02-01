@@ -3,88 +3,74 @@
 <mapper namespace="com.cunjun.personal.emos.wx.db.dao.TbFaceModelDao">
     <resultMap id="BaseResultMap" type="com.cunjun.personal.emos.wx.db.pojo.TbFaceModel">
         <id column="id" jdbcType="INTEGER" property="id"/>
-        <result column="param_key" jdbcType="VARCHAR" property="paramKey"/>
-        <result column="param_value" jdbcType="VARCHAR" property="paramValue"/>
-        <result column="status" jdbcType="TINYINT" property="status"/>
-        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="user_id" jdbcType="INTEGER" property="userId"/>
+        <result column="face_model" jdbcType="VARCHAR" property="faceModel"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, param_key, param_value, `status`, remark
+        id, user_id, face_model
     </sql>
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
-        from sys_config
+        from tb_face_model
         where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="selectFaceModelByUserId" resultType="java.lang.String">
+        select face_model
+        from tb_face_model
+        where user_id = #{userId, jdbcType=INTEGER};
     </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
-        from sys_config
+        from tb_face_model
         where id = #{id,jdbcType=INTEGER}
+    </delete>
+    <delete id="deleteFaceModelByUserId">
+        delete
+        from tb_face_model
+        where user_id = #{userId, jdbcType=INTEGER};
     </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbFaceModel"
             useGeneratedKeys="true">
-        insert into sys_config (param_key, param_value, `status`,
-                                remark)
-        values (#{paramKey,jdbcType=VARCHAR}, #{paramValue,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT},
-                #{remark,jdbcType=VARCHAR})
+        insert into tb_face_model (user_id, face_model)
+        values (#{userId,jdbcType=INTEGER}, #{faceModel,jdbcType=VARCHAR})
     </insert>
     <insert id="insertSelective" keyColumn="id" keyProperty="id"
             parameterType="com.cunjun.personal.emos.wx.db.pojo.TbFaceModel" useGeneratedKeys="true">
-        insert into sys_config
+        insert into tb_face_model
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="paramKey != null">
-                param_key,
+            <if test="userId != null">
+                user_id,
             </if>
-            <if test="paramValue != null">
-                param_value,
-            </if>
-            <if test="status != null">
-                `status`,
-            </if>
-            <if test="remark != null">
-                remark,
+            <if test="faceModel != null">
+                face_model,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="paramKey != null">
-                #{paramKey,jdbcType=VARCHAR},
+            <if test="userId != null">
+                #{userId,jdbcType=INTEGER},
             </if>
-            <if test="paramValue != null">
-                #{paramValue,jdbcType=VARCHAR},
-            </if>
-            <if test="status != null">
-                #{status,jdbcType=TINYINT},
-            </if>
-            <if test="remark != null">
-                #{remark,jdbcType=VARCHAR},
+            <if test="faceModel != null">
+                #{faceModel,jdbcType=VARCHAR},
             </if>
         </trim>
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbFaceModel">
-        update sys_config
+        update tb_face_model
         <set>
-            <if test="paramKey != null">
-                param_key = #{paramKey,jdbcType=VARCHAR},
+            <if test="userId != null">
+                user_id = #{userId,jdbcType=INTEGER},
             </if>
-            <if test="paramValue != null">
-                param_value = #{paramValue,jdbcType=VARCHAR},
-            </if>
-            <if test="status != null">
-                `status` = #{status,jdbcType=TINYINT},
-            </if>
-            <if test="remark != null">
-                remark = #{remark,jdbcType=VARCHAR},
+            <if test="faceModel != null">
+                face_model = #{faceModel,jdbcType=VARCHAR},
             </if>
         </set>
         where id = #{id,jdbcType=INTEGER}
     </update>
     <update id="updateByPrimaryKey" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbFaceModel">
-        update sys_config
-        set param_key   = #{paramKey,jdbcType=VARCHAR},
-            param_value = #{paramValue,jdbcType=VARCHAR},
-            `status`    = #{status,jdbcType=TINYINT},
-            remark      = #{remark,jdbcType=VARCHAR}
+        update tb_face_model
+        set user_id    = #{userId,jdbcType=INTEGER},
+            face_model = #{faceModel,jdbcType=VARCHAR}
         where id = #{id,jdbcType=INTEGER}
     </update>
 </mapper>

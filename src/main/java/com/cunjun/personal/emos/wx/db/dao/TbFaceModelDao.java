@@ -2,6 +2,7 @@ package com.cunjun.personal.emos.wx.db.dao;
 
 import com.cunjun.personal.emos.wx.db.pojo.TbFaceModel;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface TbFaceModelDao {
@@ -16,4 +17,8 @@ public interface TbFaceModelDao {
     int updateByPrimaryKeySelective(TbFaceModel record);
 
     int updateByPrimaryKey(TbFaceModel record);
+
+    String selectFaceModelByUserId(@Param("userId") Integer userId);
+
+    int deleteFaceModelByUserId(@Param("userId") Integer userId);
 }

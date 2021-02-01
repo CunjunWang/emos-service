@@ -6,11 +6,13 @@ import com.cunjun.personal.emos.wx.db.dao.SysConfigDao;
 import com.cunjun.personal.emos.wx.db.pojo.SysConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.List;
 
@@ -18,6 +20,9 @@ import java.util.List;
 @ServletComponentScan
 @SpringBootApplication
 public class NixieEmosWxApiApplication {
+
+    @Value("${emos.temp-image-folder}")
+    private String tempImageFolder;
 
     @Autowired
     private SysConfigDao sysConfigDao;
@@ -43,6 +48,9 @@ public class NixieEmosWxApiApplication {
                 log.error("执行异常, ", e);
             }
         });
+
+        // 创建临时文件夹
+        new File(tempImageFolder).mkdirs();
     }
 
 }
