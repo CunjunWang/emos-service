@@ -13,6 +13,7 @@ import com.cunjun.personal.emos.wx.db.pojo.TbCheckin;
 import com.cunjun.personal.emos.wx.db.pojo.TbFaceModel;
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import com.cunjun.personal.emos.wx.service.inf.ICheckinService;
+import com.cunjun.personal.emos.wx.util.EmailUtil;
 import com.cunjun.personal.emos.wx.util.JSoupUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Element;
@@ -24,7 +25,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -44,7 +44,7 @@ public class CheckinService implements ICheckinService {
     @Value("${emos.face.checkin-url}")
     private String checkinUrl;
 
-    @Value("${course.icode}")
+    @Value("${course.api-code}")
     private String apiCode;
 
     @Value("${emos.checkPandemic}")
@@ -69,7 +69,7 @@ public class CheckinService implements ICheckinService {
     private TbFaceModelDao faceModelDao;
 
     @Autowired
-    private RestTemplate restTemplate;
+    private EmailUtil emailUtil;
 
     @Autowired
     private JSoupUtil jSoupUtil;
@@ -150,6 +150,7 @@ public class CheckinService implements ICheckinService {
         } else if ("False".equals(body)) {
             throw new EmosException("签到无效, 非本人签到");
         } else if ("True".equals(body)) {
+            String address = (String) param.get("address");
             String city = (String) param.get("city");
             String district = (String) param.get("district");
 
@@ -164,9 +165,8 @@ public class CheckinService implements ICheckinService {
                     if (elements.size() > 0) {
                         Element e = elements.get(0);
                         String risk = e.select("p:last-child").text();
-                        if (Constant.PANDEMIC_HIGH_RISK.equals(risk)) {
-                            // TODO: 发送告警邮件
-                        }
+                        if (Constant.PANDEMIC_HIGH_RISK.equals(risk))
+                            emailUtil.sendMessage(userId, address);
                     }
                 }
             }

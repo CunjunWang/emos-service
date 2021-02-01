@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -17,8 +19,10 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 @Slf4j
+@EnableAsync
 @ServletComponentScan
 @SpringBootApplication
+@PropertySource(value = {"classpath:application.yml", "classpath:secret.properties"})
 public class NixieEmosWxApiApplication {
 
     @Value("${emos.temp-image-folder}")

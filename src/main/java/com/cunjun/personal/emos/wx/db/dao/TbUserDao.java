@@ -4,6 +4,7 @@ import com.cunjun.personal.emos.wx.db.pojo.TbUser;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.HashMap;
 import java.util.Set;
 
 @Mapper
@@ -27,4 +28,6 @@ public interface TbUserDao {
     Integer searchIdByOpenId(@Param("openId") String openId);
 
     Set<String> searchUserPermissions(@Param("userId") Integer userId);
+
+    HashMap<String, String> searchNameAndDept(@Param("userId") Integer userId);
 }

@@ -51,6 +51,9 @@ spring:
       authentication-database: admin
       username: root
       password: 65261599Duck
+  mail:
+    default-encoding: UTF-8
+    host: smtp.163.com
 
 # Mybatis配置
 mybatis:
@@ -83,3 +86,13 @@ emos:
   temp-image-folder: /Users/CunjunWang/Desktop/tmp
   checkPandemic: true
   pandemic-risk-url: http://m.%s.bendibao.com/news/yqdengji/?qu=%s
+  thread:
+    core-pool-size: 4
+    max-pool-size: 8
+    queue-capacity: 32
+    keep-alive-secs: 60
+    name-prefix: task-
+  email:
+    pandemic:
+      subject: 员工[%s]身处高风险疫情地区警告
+      content: 部门[%s]员工[%s]于[%s]在[%s]签到, 该地区属于新冠疫情高风险地区. 请及时与该员工联系核实情况!
