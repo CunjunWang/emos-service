@@ -119,6 +119,12 @@ public class CheckinService implements ICheckinService {
     @Override
     @Transactional
     public void checkin(HashMap<String, Object> param) {
+        Integer userId = (Integer) param.get("userId");
+        String today = DateUtil.today();
+        Integer checkinRecord = checkinDao.selectByUserAndDate(userId, today);
+        if (checkinRecord > 0)
+            throw new EmosException("您今天已经签到过了");
+
         Date now = DateUtil.date();
         Date attendanceStart = DateUtil.parse(DateUtil.today() + " " + systemConstants.attendanceTime);
         Date attendanceEnd = DateUtil.parse(DateUtil.today() + " " + systemConstants.attendanceEndTime);
@@ -128,7 +134,6 @@ public class CheckinService implements ICheckinService {
         else if (now.compareTo(attendanceStart) > 0 && now.compareTo(attendanceEnd) < 0)
             status = 2;
 
-        int userId = (Integer) param.get("userId");
         String faceModel = faceModelDao.selectFaceModelByUserId(userId);
         if (faceModel == null) {
             log.warn("不存在员工[{}]的人脸模型", userId);

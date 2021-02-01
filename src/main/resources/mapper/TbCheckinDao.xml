@@ -32,6 +32,12 @@
           and create_time between #{start} and #{end}
         limit 1;
     </select>
+    <select id="selectByUserAndDate" resultType="java.lang.Integer">
+        select count(id)
+        from tb_checkin
+        where user_id = #{userId, jdbcType=INTEGER}
+          and date = #{today, jdbcType=VARCHAR}
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
         from tb_checkin

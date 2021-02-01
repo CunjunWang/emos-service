@@ -21,4 +21,7 @@ public interface TbCheckinDao {
     Integer userHasCheckedInBetween(@Param("userId") Integer userId,
                                     @Param("start") String start,
                                     @Param("end") String end);
+
+    Integer selectByUserAndDate(@Param("userId") Integer userId,
+                                @Param("today") String today);
 }
