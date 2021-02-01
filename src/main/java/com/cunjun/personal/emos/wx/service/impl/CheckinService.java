@@ -8,21 +8,22 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.cunjun.personal.emos.wx.common.Constant;
 import com.cunjun.personal.emos.wx.common.SystemConstants;
-import com.cunjun.personal.emos.wx.db.dao.TbCheckinDao;
-import com.cunjun.personal.emos.wx.db.dao.TbFaceModelDao;
-import com.cunjun.personal.emos.wx.db.dao.TbHolidaysDao;
-import com.cunjun.personal.emos.wx.db.dao.TbWorkdayDao;
+import com.cunjun.personal.emos.wx.db.dao.*;
 import com.cunjun.personal.emos.wx.db.pojo.TbCheckin;
 import com.cunjun.personal.emos.wx.db.pojo.TbFaceModel;
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import com.cunjun.personal.emos.wx.service.inf.ICheckinService;
+import com.cunjun.personal.emos.wx.util.JSoupUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
@@ -46,6 +47,12 @@ public class CheckinService implements ICheckinService {
     @Value("${course.icode}")
     private String apiCode;
 
+    @Value("${emos.checkPandemic}")
+    private Boolean checkPandemic;
+
+    @Value("${emos.pandemic-risk-url}")
+    private String pandemicRiskUrl;
+
     @Autowired
     private TbHolidaysDao holidaysDao;
 
@@ -56,10 +63,16 @@ public class CheckinService implements ICheckinService {
     private TbCheckinDao checkinDao;
 
     @Autowired
+    private TbCityDao cityDao;
+
+    @Autowired
     private TbFaceModelDao faceModelDao;
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private JSoupUtil jSoupUtil;
 
     @Autowired
     private SystemConstants systemConstants;
@@ -137,8 +150,38 @@ public class CheckinService implements ICheckinService {
         } else if ("False".equals(body)) {
             throw new EmosException("签到无效, 非本人签到");
         } else if ("True".equals(body)) {
-            // TODO: 获取签到地区新冠疫情风险等级
+            String city = (String) param.get("city");
+            String district = (String) param.get("district");
+
+            // 获取签到地区新冠疫情风险等级
+            if (checkPandemic) { // 是否需要检查新冠疫情等级
+                log.info("查询[{}][{}]的疫情风险等级", city, district);
+                if (!StringUtils.isEmpty(city) && !StringUtils.isEmpty(district)) {
+                    String code = cityDao.searchCodeByCity(city);
+                    String url = String.format(pandemicRiskUrl, code, district);
+                    Element doc = jSoupUtil.getDocument(url);
+                    Elements elements = doc.getElementsByClass("list-content");
+                    if (elements.size() > 0) {
+                        Element e = elements.get(0);
+                        String risk = e.select("p:last-child").text();
+                        if (Constant.PANDEMIC_HIGH_RISK.equals(risk)) {
+                            // TODO: 发送告警邮件
+                        }
+                    }
+                }
+            }
+
             TbCheckin record = new TbCheckin();
+            record.setUserId(userId);
+            record.setAddress((String) param.get("address"));
+            record.setDistrict(district);
+            record.setCity(city);
+            record.setCountry((String) param.get("country"));
+            record.setProvince((String) param.get("province"));
+            record.setStatus((byte) status);
+            record.setDate(DateUtil.today());
+            record.setCreateTime(now);
+            checkinDao.insertSelective(record);
         }
     }
 
@@ -146,6 +189,7 @@ public class CheckinService implements ICheckinService {
      * 创建人脸识别模型
      */
     @Override
+    @Transactional
     public void createFaceModel(Integer userId, String photoPath) {
         log.info("创建用户[{}]人脸识别模型", userId);
         HttpRequest request = HttpUtil.createPost(createFaceModelUrl);

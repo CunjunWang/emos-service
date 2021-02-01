@@ -2,6 +2,7 @@ package com.cunjun.personal.emos.wx.db.dao;
 
 import com.cunjun.personal.emos.wx.db.pojo.TbCity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface TbCityDao {
@@ -16,4 +17,6 @@ public interface TbCityDao {
     int updateByPrimaryKeySelective(TbCity record);
 
     int updateByPrimaryKey(TbCity record);
+
+    String searchCodeByCity(@Param("city") String city);
 }

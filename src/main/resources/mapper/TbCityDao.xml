@@ -3,88 +3,69 @@
 <mapper namespace="com.cunjun.personal.emos.wx.db.dao.TbCityDao">
     <resultMap id="BaseResultMap" type="com.cunjun.personal.emos.wx.db.pojo.TbCity">
         <id column="id" jdbcType="INTEGER" property="id"/>
-        <result column="param_key" jdbcType="VARCHAR" property="paramKey"/>
-        <result column="param_value" jdbcType="VARCHAR" property="paramValue"/>
-        <result column="status" jdbcType="TINYINT" property="status"/>
-        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="city" jdbcType="VARCHAR" property="city"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, param_key, param_value, `status`, remark
+        id, city, code
     </sql>
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
-        from sys_config
+        from tb_city
         where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="searchCodeByCity" resultType="java.lang.String">
+        select code
+        from tb_city
+        where city = #{city, jdbcType=VARCHAR}
     </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
-        from sys_config
+        from tb_city
         where id = #{id,jdbcType=INTEGER}
     </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbCity"
             useGeneratedKeys="true">
-        insert into sys_config (param_key, param_value, `status`,
-                                remark)
-        values (#{paramKey,jdbcType=VARCHAR}, #{paramValue,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT},
-                #{remark,jdbcType=VARCHAR})
+        insert into tb_city (city, code)
+        values (#{city,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR})
     </insert>
     <insert id="insertSelective" keyColumn="id" keyProperty="id"
             parameterType="com.cunjun.personal.emos.wx.db.pojo.TbCity" useGeneratedKeys="true">
-        insert into sys_config
+        insert into tb_city
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="paramKey != null">
-                param_key,
+            <if test="city != null">
+                city,
             </if>
-            <if test="paramValue != null">
-                param_value,
-            </if>
-            <if test="status != null">
-                `status`,
-            </if>
-            <if test="remark != null">
-                remark,
+            <if test="code != null">
+                code,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="paramKey != null">
-                #{paramKey,jdbcType=VARCHAR},
+            <if test="city != null">
+                #{city,jdbcType=VARCHAR},
             </if>
-            <if test="paramValue != null">
-                #{paramValue,jdbcType=VARCHAR},
-            </if>
-            <if test="status != null">
-                #{status,jdbcType=TINYINT},
-            </if>
-            <if test="remark != null">
-                #{remark,jdbcType=VARCHAR},
+            <if test="code != null">
+                #{code,jdbcType=VARCHAR},
             </if>
         </trim>
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbCity">
-        update sys_config
+        update tb_city
         <set>
-            <if test="paramKey != null">
-                param_key = #{paramKey,jdbcType=VARCHAR},
+            <if test="city != null">
+                city = #{city,jdbcType=VARCHAR},
             </if>
-            <if test="paramValue != null">
-                param_value = #{paramValue,jdbcType=VARCHAR},
-            </if>
-            <if test="status != null">
-                `status` = #{status,jdbcType=TINYINT},
-            </if>
-            <if test="remark != null">
-                remark = #{remark,jdbcType=VARCHAR},
+            <if test="code != null">
+                code = #{code,jdbcType=VARCHAR},
             </if>
         </set>
         where id = #{id,jdbcType=INTEGER}
     </update>
     <update id="updateByPrimaryKey" parameterType="com.cunjun.personal.emos.wx.db.pojo.TbCity">
-        update sys_config
-        set param_key   = #{paramKey,jdbcType=VARCHAR},
-            param_value = #{paramValue,jdbcType=VARCHAR},
-            `status`    = #{status,jdbcType=TINYINT},
-            remark      = #{remark,jdbcType=VARCHAR}
+        update tb_city
+        set city = #{city,jdbcType=VARCHAR},
+            code = #{code,jdbcType=VARCHAR}
         where id = #{id,jdbcType=INTEGER}
     </update>
 </mapper>
