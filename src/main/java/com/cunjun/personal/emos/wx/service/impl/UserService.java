@@ -28,10 +28,11 @@ import java.util.Set;
 @Slf4j
 @Service
 @Scope("prototype")
-@PropertySource("classpath:secret.properties")
+@PropertySource(value = {"classpath:secret.properties", "classpath:application.yml"})
 public class UserService implements IUserService {
 
-    private static final String wxOpenIdUrl = "https://api.weixin.qq.com/sns/jscode2session";
+    @Value("${emos.wx.open-id-url}")
+    private String wxOpenIdUrl;
 
     @Value("${nixie.emos.wx.app-id}")
     private String wxAppId;
@@ -102,13 +103,20 @@ public class UserService implements IUserService {
 
     /**
      * 根据主键查询用户
-     *
-     * @param userId
      */
     @Override
     public TbUser selectValidUserById(Integer userId) {
         log.info("根据主键[{}]查询用户", userId);
         return userDao.selectValidUserById(userId);
+    }
+
+    /**
+     * 查询用户入职日期
+     */
+    @Override
+    public String searchUserHireDate(Integer userId) {
+        log.info("查询用户[{}]的入职日期", userId);
+        return userDao.searchUserHireDate(userId);
     }
 
     /**

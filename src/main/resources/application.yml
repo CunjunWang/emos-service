@@ -73,6 +73,8 @@ logging:
 
 # 应用程序配置
 emos:
+  wx:
+    open-id-url: https://api.weixin.qq.com/sns/jscode2session
   jwt:
     #密钥
     secret: this-is-a-random-secret-for-emos-implemented-by-cunjun-1234567890

@@ -30,4 +30,6 @@ public interface TbUserDao {
     Set<String> searchUserPermissions(@Param("userId") Integer userId);
 
     HashMap<String, String> searchNameAndDept(@Param("userId") Integer userId);
+
+    String searchUserHireDate(@Param("userId") Integer userId);
 }

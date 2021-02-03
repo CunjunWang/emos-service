@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.cunjun.personal.emos.wx.common.Constant;
 import com.cunjun.personal.emos.wx.common.SystemConstants;
+import com.cunjun.personal.emos.wx.service.impl.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,9 @@ public class EmosDateUtil {
 
     @Autowired
     private SystemConstants systemConstants;
+
+    @Autowired
+    private UserService userService;
 
     public HashMap<String, DateTime> buildDates() {
         HashMap<String, DateTime> result = new HashMap<>();
@@ -38,4 +42,14 @@ public class EmosDateUtil {
         return result;
     }
 
+    /**
+     * 与入职日期做比较, 获取用户考勤开始日期
+     */
+    public DateTime getCheckinStartDate(Integer userId) {
+        DateTime hireDate = DateUtil.parse(userService.searchUserHireDate(userId));
+        DateTime startDate = DateUtil.beginOfWeek(DateUtil.date());
+        if (startDate.isBefore(hireDate))
+            startDate = hireDate;
+        return startDate;
+    }
 }

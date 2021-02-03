@@ -90,6 +90,7 @@ public class CheckinService implements ICheckinService {
      */
     @Override
     public String validTimeToCheckin(Integer userId, String date) {
+        // 判断今天是否是工作日
         boolean isHoliday = holidaysDao.selectTodayIsHoliday() != null;
         boolean isWorkday = workdayDao.selectTodayIsWorkday() != null;
         String type = Constant.CHECKIN_DAY_WORKDAY;
@@ -100,46 +101,48 @@ public class CheckinService implements ICheckinService {
         else if (isWorkday)
             type = Constant.CHECKIN_DAY_WORKDAY;
 
-        if (Constant.CHECKIN_DAY_HOLIDAY.equals(type))
+        if (Constant.CHECKIN_DAY_HOLIDAY.equals(type)) // 休息日不需要考勤
             return Constant.CHECKIN_NO_NEED_FOR_HOLIDAY;
         else {
             HashMap<String, DateTime> dates = emosDateUtil.buildDates();
+            dates.get(Constant.DATETIME_ATTENDANCE_START);
+            // 尚未到上班考勤时间
             if (dates.get(Constant.DATETIME_NOW).isBefore(dates.get(Constant.DATETIME_ATTENDANCE_START)))
                 return Constant.CHECKIN_TOO_EARLY_FOR_ATTENDANCE;
-            else if (dates.get(Constant.DATETIME_NOW).isAfter(dates.get(Constant.DATETIME_ATTENDANCE_END)))
+            // 已经过了上班考勤时间
+            if (dates.get(Constant.DATETIME_NOW).isAfter(dates.get(Constant.DATETIME_ATTENDANCE_END)))
                 return Constant.CHECKIN_TOO_LATE_FOR_ATTENDANCE;
-            else {
-                String start = DateUtil.today() + " " + systemConstants.attendanceStartTime;
-                String end = DateUtil.today() + " " + systemConstants.attendanceEndTime;
-                boolean hasCheckedIn = checkinDao
-                        .userHasCheckedInBetween(userId, start, end) != null;
-                return hasCheckedIn ? Constant.CHECKIN_DUPLICATE_OPERATION :
-                        Constant.CHECKIN_OK_TO_CHECKIN;
-            }
+            // 若当天已经考勤过了不可重复考勤
+            String start = DateUtil.today() + " " + systemConstants.attendanceStartTime;
+            String end = DateUtil.today() + " " + systemConstants.attendanceEndTime;
+            boolean hasCheckedIn = checkinDao.userHasCheckedInBetween(userId, start, end) != null;
+            return hasCheckedIn ? Constant.CHECKIN_DUPLICATE_OPERATION : Constant.CHECKIN_OK_TO_CHECKIN;
         }
     }
 
     /**
-     * 用户签到
+     * 用户签到考勤
      */
     @Override
     @Transactional
     public void checkin(HashMap<String, Object> param) {
         Integer userId = (Integer) param.get("userId");
         String today = DateUtil.today();
+        // 考勤过了不需要重复考勤
         Integer checkinRecord = checkinDao.selectByUserAndDate(userId, today);
         if (checkinRecord > 0)
             throw new EmosException(Constant.CHECKIN_DUPLICATE_OPERATION);
 
-        Date now = DateUtil.date();
-        Date attendanceStart = DateUtil.parse(DateUtil.today() + " " + systemConstants.attendanceTime);
-        Date attendanceEnd = DateUtil.parse(DateUtil.today() + " " + systemConstants.attendanceEndTime);
-        int status = 1;
-        if (now.compareTo(attendanceStart) <= 0)
-            status = 1;
-        else if (now.compareTo(attendanceStart) > 0 && now.compareTo(attendanceEnd) < 0)
-            status = 2;
+        HashMap<String, DateTime> dates = emosDateUtil.buildDates();
+        Date now = dates.get(Constant.DATETIME_NOW);
+        Date attendanceStart = dates.get(Constant.DATETIME_ATTENDANCE_START);
+        Date attendanceEnd = dates.get(Constant.DATETIME_ATTENDANCE_END);
+        // 考勤状态, 是否迟到
+        int status = Constant.CHECKIN_DB_STATUS_OK;
+        if (now.compareTo(attendanceStart) > 0 && now.compareTo(attendanceEnd) < 0)
+            status = Constant.CHECKIN_DB_STATUS_LATE;
 
+        // TODO: 提取下列调用人脸识别接口相关代码到私有方法
         String faceModel = faceModelDao.selectFaceModelByUserId(userId);
         if (faceModel == null) {
             log.warn("不存在员工[{}]的人脸模型", userId);
@@ -156,14 +159,11 @@ public class CheckinService implements ICheckinService {
         }
         String body = response.body();
         if (Constant.FACE_MODEL_CANNOT_RECOGNIZE.equals(body) ||
-                Constant.FACE_MODEL_MULTIPLE_FACES.equals(body)) {
+                Constant.FACE_MODEL_MULTIPLE_FACES.equals(body))
             throw new EmosException(body);
-        } else if (Constant.FACE_MODEL_RESULT_FALSE.equals(body)) {
+        else if (Constant.FACE_MODEL_RESULT_FALSE.equals(body))
             throw new EmosException(Constant.CHECKIN_ERROR_NOT_SELF_OPERATION);
-        } else if (Constant.FACE_MODEL_RESULT_TRUE.equals(body)) {
-            if (checkPandemic)  // 是否需要检查新冠疫情等级
-                sendPandemicWarningEmail(param);
-
+        else if (Constant.FACE_MODEL_RESULT_TRUE.equals(body)) {
             TbCheckin record = new TbCheckin();
             record.setUserId(userId);
             record.setAddress((String) param.get("address"));
@@ -174,8 +174,19 @@ public class CheckinService implements ICheckinService {
             record.setStatus((byte) status);
             record.setDate(DateUtil.today());
             record.setCreateTime(now);
+            if (checkPandemic) { // 是否需要检查新冠疫情等级
+                String risk = this.getCovidPandemicRisk((String) param.get("city"), (String) param.get("district"));
+                sendPandemicWarningEmail(param, risk);
+                switch (risk) {
+                    case Constant.CHECKIN_LOCATION_PANDEMIC_MID_RISK -> record.setRisk(Constant.CHECKIN_LOCATION_PANDEMIC_DB_MID_RISK);
+                    case Constant.CHECKIN_LOCATION_PANDEMIC_HIGH_RISK -> record.setRisk(Constant.CHECKIN_LOCATION_PANDEMIC_DB_HIGH_RISK);
+                    default -> record.setRisk(Constant.CHECKIN_LOCATION_PANDEMIC_DB_LOW_RISK);
+                }
+            }
+            // 入库考勤记录
             checkinDao.insertSelective(record);
-        }
+        } else
+            throw new EmosException(Constant.FACE_MODEL_SERVICE_ERROR);
     }
 
     /**
@@ -226,8 +237,8 @@ public class CheckinService implements ICheckinService {
     @Override
     public List<HashMap<String, String>> searchUserWeeklyCheckinResult(HashMap<String, Object> param) {
         Integer userId = (Integer) param.get("userId");
-        String start = (String) param.get("start");
-        String end = (String) param.get("end");
+        String start = (String) param.get("startDate");
+        String end = (String) param.get("endDate");
         log.info("查询用户[{}]一周内的签到记录", userId);
         List<HashMap<String, String>> weeklyCheckin = checkinDao.selectWeeklyCheckinByUserId(userId, start, end);
         List<String> specialHolidaysThisWeek = holidaysDao.searchHolidayInRange(start, end);
@@ -254,7 +265,6 @@ public class CheckinService implements ICheckinService {
                         status = map.get("status");
                         break;
                     }
-
                 // 若当天考勤还没结束并且该员工还没考勤, 不可以算作旷工
                 DateTime endTime = emosDateUtil.buildDates().get(Constant.DATETIME_ATTENDANCE_END);
                 String today = DateUtil.today();
@@ -277,24 +287,30 @@ public class CheckinService implements ICheckinService {
     /**
      * 发送疫情告警邮件
      */
-    private void sendPandemicWarningEmail(HashMap<String, Object> param) {
+    private void sendPandemicWarningEmail(HashMap<String, Object> param, String risk) {
         Integer userId = (Integer) param.get("userId");
-        String city = (String) param.get("city");
-        String district = (String) param.get("district");
         String address = (String) param.get("address");
+        if (Constant.CHECKIN_LOCATION_PANDEMIC_HIGH_RISK.equals(risk))
+            emailUtil.sendMessage(userId, address);
+    }
+
+    /**
+     * 解析新冠疫情风险
+     */
+    private String getCovidPandemicRisk(String city, String district) {
         log.info("查询[{}][{}]的疫情风险等级", city, district);
-        if (!StringUtils.isEmpty(city) && !StringUtils.isEmpty(param.get("district"))) {
+        String risk = Constant.CHECKIN_LOCATION_PANDEMIC_LOW_RISK;
+        if (!StringUtils.isEmpty(city) && !StringUtils.isEmpty(district)) {
             String code = cityDao.searchCodeByCity(city);
             String url = String.format(pandemicRiskUrl, code, district);
             Element doc = jSoupUtil.getDocument(url);
             Elements elements = doc.getElementsByClass("list-content");
             if (elements.size() > 0) {
                 Element e = elements.get(0);
-                String risk = e.select("p:last-child").text();
-                if (Constant.CHECKIN_LOCATION_PANDEMIC_HIGH_RISK.equals(risk))
-                    emailUtil.sendMessage(userId, address);
+                risk = e.select("p:last-child").text();
             }
         }
+        return risk;
     }
 
 }

@@ -34,14 +34,23 @@ public class Constant {
     public static final String CHECKIN_DAY_WORKDAY = "工作日";
     public static final String CHECKIN_DAY_HOLIDAY = "节假日";
     public static final String CHECKIN_ERROR_NOT_SELF_OPERATION = "签到无效, 非本人签到";
-    public static final String CHECKIN_LOCATION_PANDEMIC_HIGH_RISK = "高风险";
+
     public static final String CHECKIN_DUPLICATE_OPERATION = "您今天已经签到过了";
     public static final String CHECKIN_NO_NEED_FOR_HOLIDAY = "节假日不需要考勤";
     public static final String CHECKIN_TOO_EARLY_FOR_ATTENDANCE = "未到上班考勤开始时间";
     public static final String CHECKIN_TOO_LATE_FOR_ATTENDANCE = "超出了上班考勤结束时间";
     public static final String CHECKIN_OK_TO_CHECKIN = "可以考勤";
 
-    public static final String CHECKIN_STATUS_ABSENCE = "缺勤";
     public static final String CHECKIN_STATUS_OK = "正常";
     public static final String CHECKIN_STATUS_LATE = "迟到";
+    public static final String CHECKIN_STATUS_ABSENCE = "缺勤";
+    public static final Integer CHECKIN_DB_STATUS_OK = 1; // 正常
+    public static final Integer CHECKIN_DB_STATUS_LATE = 2; // 迟到
+
+    public static final String CHECKIN_LOCATION_PANDEMIC_LOW_RISK = "低风险";
+    public static final String CHECKIN_LOCATION_PANDEMIC_MID_RISK = "中风险";
+    public static final String CHECKIN_LOCATION_PANDEMIC_HIGH_RISK = "高风险";
+    public static final Integer CHECKIN_LOCATION_PANDEMIC_DB_LOW_RISK = 1; // 低风险
+    public static final Integer CHECKIN_LOCATION_PANDEMIC_DB_MID_RISK = 2; // 中风险
+    public static final Integer CHECKIN_LOCATION_PANDEMIC_DB_HIGH_RISK = 3; // 高风险
 }

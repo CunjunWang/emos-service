@@ -29,4 +29,8 @@ public interface IUserService {
      */
     TbUser selectValidUserById(Integer userId);
 
+    /**
+     * 查询用户入职日期
+     */
+    String searchUserHireDate(Integer userId);
 }

@@ -1,11 +1,15 @@
 package com.cunjun.personal.emos.wx.controller;
 
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import com.cunjun.personal.emos.wx.common.ResultData;
+import com.cunjun.personal.emos.wx.common.SystemConstants;
 import com.cunjun.personal.emos.wx.controller.form.checkin.CheckinForm;
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import com.cunjun.personal.emos.wx.service.impl.CheckinService;
+import com.cunjun.personal.emos.wx.service.impl.UserService;
+import com.cunjun.personal.emos.wx.util.EmosDateUtil;
 import com.cunjun.personal.emos.wx.util.JWTUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -19,6 +23,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by CunjunWang on 2021/1/30.
@@ -33,10 +38,19 @@ public class CheckinController {
     private String tempImageFolder;
 
     @Autowired
+    private SystemConstants systemConstants;
+
+    @Autowired
     private JWTUtil jwtUtil;
 
     @Autowired
+    private EmosDateUtil emosDateUtil;
+
+    @Autowired
     private CheckinService checkinService;
+
+    @Autowired
+    private UserService userService;
 
     @RequestMapping(value = "/ableOrNot", method = RequestMethod.GET)
     @ApiOperation(value = "判断用户是否可以签到")
@@ -107,6 +121,30 @@ public class CheckinController {
             // 删除上传的临时自拍
             FileUtil.del(tempPath);
         }
+    }
+
+    @RequestMapping(value = "/today", method = RequestMethod.GET)
+    @ApiOperation(value = "查询用户当日签到数据")
+    public ResultData searchTodayCheckin(@RequestHeader("token") String token) {
+        Integer userId = jwtUtil.getUserId(token);
+
+        HashMap<String, Object> checkin = checkinService.searchUserTodayCheckin(userId);
+
+        checkin.put("attendanceTime", systemConstants.attendanceTime);
+        checkin.put("closingTime", systemConstants.closingTime);
+        Long days = checkinService.searchUserTotalCheckinDays(userId);
+        checkin.put("checkinDays", days);
+
+        DateTime startDate = emosDateUtil.getCheckinStartDate(userId);
+        DateTime endDate = DateUtil.endOfWeek(DateUtil.date());
+        HashMap<String, Object> param = new HashMap<>();
+        param.put("startDate", startDate.toString());
+        param.put("endDate", endDate.toString());
+        param.put("userId", userId);
+        List<HashMap<String, String>> list = checkinService.searchUserWeeklyCheckinResult(param);
+        checkin.put("weeklyCheckin", list);
+
+        return ResultData.ok().put("result", checkin);
     }
 
 }

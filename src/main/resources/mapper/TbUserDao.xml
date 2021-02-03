@@ -60,6 +60,12 @@
         where u.id = #{userId}
           and u.status = 1
     </select>
+    <select id="searchUserHireDate" resultType="java.lang.String">
+        select hiredate
+        from tb_user u
+        where u.id = #{userId}
+          and u.status = 1;
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
         from tb_user
