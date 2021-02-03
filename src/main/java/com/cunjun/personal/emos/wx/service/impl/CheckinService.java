@@ -14,6 +14,7 @@ import com.cunjun.personal.emos.wx.db.pojo.TbFaceModel;
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import com.cunjun.personal.emos.wx.service.inf.ICheckinService;
 import com.cunjun.personal.emos.wx.util.EmailUtil;
+import com.cunjun.personal.emos.wx.util.EmosDateUtil;
 import com.cunjun.personal.emos.wx.util.JSoupUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Element;
@@ -75,6 +76,9 @@ public class CheckinService implements ICheckinService {
     private JSoupUtil jSoupUtil;
 
     @Autowired
+    private EmosDateUtil emosDateUtil;
+
+    @Autowired
     private SystemConstants systemConstants;
 
     /**
@@ -93,22 +97,20 @@ public class CheckinService implements ICheckinService {
             type = Constant.CHECKIN_DAY_WORKDAY;
 
         if (Constant.CHECKIN_DAY_HOLIDAY.equals(type))
-            return "节假日不需要考勤";
+            return Constant.CHECKIN_NO_NEED_FOR_HOLIDAY;
         else {
-            DateTime now = DateUtil.date();
-            String start = DateUtil.today() + " " + systemConstants.attendanceStartTime;
-            String end = DateUtil.today() + " " + systemConstants.attendanceEndTime;
-            DateTime attendanceStart = DateUtil.parse(start);
-            DateTime attendanceEnd = DateUtil.parse(end);
-
-            if (now.isBefore(attendanceStart))
-                return "未到上班考勤开始时间";
-            else if (now.isAfter(attendanceEnd))
-                return "超出了上班考勤结束时间";
+            HashMap<String, DateTime> dates = emosDateUtil.buildDates();
+            if (dates.get(Constant.DATETIME_NOW).isBefore(dates.get(Constant.DATETIME_ATTENDANCE_START)))
+                return Constant.CHECKIN_TOO_EARLY_FOR_ATTENDANCE;
+            else if (dates.get(Constant.DATETIME_NOW).isAfter(dates.get(Constant.DATETIME_ATTENDANCE_END)))
+                return Constant.CHECKIN_TOO_LATE_FOR_ATTENDANCE;
             else {
+                String start = DateUtil.today() + " " + systemConstants.attendanceStartTime;
+                String end = DateUtil.today() + " " + systemConstants.attendanceEndTime;
                 boolean hasCheckedIn = checkinDao
                         .userHasCheckedInBetween(userId, start, end) != null;
-                return hasCheckedIn ? "已经考勤过了" : "可以考勤";
+                return hasCheckedIn ? Constant.CHECKIN_DUPLICATE_OPERATION :
+                        Constant.CHECKIN_OK_TO_CHECKIN;
             }
         }
     }
@@ -123,7 +125,7 @@ public class CheckinService implements ICheckinService {
         String today = DateUtil.today();
         Integer checkinRecord = checkinDao.selectByUserAndDate(userId, today);
         if (checkinRecord > 0)
-            throw new EmosException("您今天已经签到过了");
+            throw new EmosException(Constant.CHECKIN_DUPLICATE_OPERATION);
 
         Date now = DateUtil.date();
         Date attendanceStart = DateUtil.parse(DateUtil.today() + " " + systemConstants.attendanceTime);
@@ -137,7 +139,7 @@ public class CheckinService implements ICheckinService {
         String faceModel = faceModelDao.selectFaceModelByUserId(userId);
         if (faceModel == null) {
             log.warn("不存在员工[{}]的人脸模型", userId);
-            throw new EmosException("不存在人脸模型");
+            throw new EmosException(Constant.FACE_MODEL_NO_CORRESPONDING_MODEL);
         }
         String path = (String) param.get("path");
         HttpRequest request = HttpUtil.createPost(checkinUrl);
@@ -145,42 +147,24 @@ public class CheckinService implements ICheckinService {
         request.form("code", apiCode);
         HttpResponse response = request.execute();
         if (response.getStatus() != 200) {
-            log.error("人脸识别服务异常");
-            throw new EmosException("人脸识别服务异常");
+            log.error(Constant.FACE_MODEL_SERVICE_ERROR);
+            throw new EmosException(Constant.FACE_MODEL_SERVICE_ERROR);
         }
         String body = response.body();
         if (Constant.FACE_MODEL_CANNOT_RECOGNIZE.equals(body) ||
                 Constant.FACE_MODEL_MULTIPLE_FACES.equals(body)) {
             throw new EmosException(body);
-        } else if ("False".equals(body)) {
-            throw new EmosException("签到无效, 非本人签到");
-        } else if ("True".equals(body)) {
-            String address = (String) param.get("address");
-            String city = (String) param.get("city");
-            String district = (String) param.get("district");
-
-            // 获取签到地区新冠疫情风险等级
-            if (checkPandemic) { // 是否需要检查新冠疫情等级
-                log.info("查询[{}][{}]的疫情风险等级", city, district);
-                if (!StringUtils.isEmpty(city) && !StringUtils.isEmpty(district)) {
-                    String code = cityDao.searchCodeByCity(city);
-                    String url = String.format(pandemicRiskUrl, code, district);
-                    Element doc = jSoupUtil.getDocument(url);
-                    Elements elements = doc.getElementsByClass("list-content");
-                    if (elements.size() > 0) {
-                        Element e = elements.get(0);
-                        String risk = e.select("p:last-child").text();
-                        if (Constant.PANDEMIC_HIGH_RISK.equals(risk))
-                            emailUtil.sendMessage(userId, address);
-                    }
-                }
-            }
+        } else if (Constant.FACE_MODEL_RESULT_FALSE.equals(body)) {
+            throw new EmosException(Constant.CHECKIN_ERROR_NOT_SELF_OPERATION);
+        } else if (Constant.FACE_MODEL_RESULT_TRUE.equals(body)) {
+            if (checkPandemic)  // 是否需要检查新冠疫情等级
+                sendPandemicWarningEmail(param);
 
             TbCheckin record = new TbCheckin();
             record.setUserId(userId);
             record.setAddress((String) param.get("address"));
-            record.setDistrict(district);
-            record.setCity(city);
+            record.setDistrict((String) param.get("district"));
+            record.setCity((String) param.get("city"));
             record.setCountry((String) param.get("country"));
             record.setProvince((String) param.get("province"));
             record.setStatus((byte) status);
@@ -212,6 +196,30 @@ public class CheckinService implements ICheckinService {
         model.setUserId(userId);
         model.setFaceModel(body);
         faceModelDao.insertSelective(model);
+    }
+
+
+    /**
+     * 发送疫情告警邮件
+     */
+    private void sendPandemicWarningEmail(HashMap<String, Object> param) {
+        Integer userId = (Integer) param.get("userId");
+        String city = (String) param.get("city");
+        String district = (String) param.get("district");
+        String address = (String) param.get("address");
+        log.info("查询[{}][{}]的疫情风险等级", city, district);
+        if (!StringUtils.isEmpty(city) && !StringUtils.isEmpty(param.get("district"))) {
+            String code = cityDao.searchCodeByCity(city);
+            String url = String.format(pandemicRiskUrl, code, district);
+            Element doc = jSoupUtil.getDocument(url);
+            Elements elements = doc.getElementsByClass("list-content");
+            if (elements.size() > 0) {
+                Element e = elements.get(0);
+                String risk = e.select("p:last-child").text();
+                if (Constant.CHECKIN_LOCATION_PANDEMIC_HIGH_RISK.equals(risk))
+                    emailUtil.sendMessage(userId, address);
+            }
+        }
     }
 
 }
