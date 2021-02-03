@@ -1,5 +1,7 @@
 package com.cunjun.personal.emos.wx.service.impl;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateRange;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
@@ -27,8 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by CunjunWang on 2021/1/30.
@@ -198,6 +202,77 @@ public class CheckinService implements ICheckinService {
         faceModelDao.insertSelective(model);
     }
 
+    /**
+     * 查询用户当天签到状态
+     */
+    @Override
+    public HashMap<String, Object> searchUserTodayCheckin(Integer userId) {
+        log.info("查询用户[{}]当天[{}]签到状态", userId, DateUtil.today());
+        return checkinDao.selectTodayCheckinByUserId(userId);
+    }
+
+    /**
+     * 查询用户总签到天数
+     */
+    @Override
+    public Long searchUserTotalCheckinDays(Integer userId) {
+        log.info("查询用户[{}]总签到天数", userId);
+        return checkinDao.selectTotalCheckinDaysByUserId(userId);
+    }
+
+    /**
+     * 查询用户一周内的签到记录
+     */
+    @Override
+    public List<HashMap<String, String>> searchUserWeeklyCheckinResult(HashMap<String, Object> param) {
+        Integer userId = (Integer) param.get("userId");
+        String start = (String) param.get("start");
+        String end = (String) param.get("end");
+        log.info("查询用户[{}]一周内的签到记录", userId);
+        List<HashMap<String, String>> weeklyCheckin = checkinDao.selectWeeklyCheckinByUserId(userId, start, end);
+        List<String> specialHolidaysThisWeek = holidaysDao.searchHolidayInRange(start, end);
+        List<String> specialWorkdaysThisWeek = workdayDao.searchWorkdayInRange(start, end);
+        DateTime startDate = DateUtil.parseDate(start);
+        DateTime endDate = DateUtil.parseDate(end);
+        DateRange range = DateUtil.range(startDate, endDate, DateField.DAY_OF_MONTH);
+
+        List<HashMap<String, String>> result = new ArrayList<>();
+        range.forEach(d -> {
+            String date = d.toString("yyyy-MM-dd");
+            String type = Constant.CHECKIN_DAY_WORKDAY;
+            if (d.isWeekend())
+                type = Constant.CHECKIN_DAY_HOLIDAY;
+            if (specialHolidaysThisWeek != null && specialHolidaysThisWeek.contains(date))
+                type = Constant.CHECKIN_DAY_HOLIDAY;
+            else if (specialWorkdaysThisWeek != null && specialWorkdaysThisWeek.contains(date))
+                type = Constant.CHECKIN_DAY_WORKDAY;
+            String status = "";
+            if (type.equals(Constant.CHECKIN_DAY_WORKDAY) && DateUtil.compare(d, DateUtil.date()) <= 0) { // 该日期已经到或者过去了, 查看考勤状态
+                status = Constant.CHECKIN_STATUS_ABSENCE;
+                for (HashMap<String, String> map : weeklyCheckin)
+                    if (map.containsValue(date)) {
+                        status = map.get("status");
+                        break;
+                    }
+
+                // 若当天考勤还没结束并且该员工还没考勤, 不可以算作旷工
+                DateTime endTime = emosDateUtil.buildDates().get(Constant.DATETIME_ATTENDANCE_END);
+                String today = DateUtil.today();
+                if (date.equals(today) && DateUtil.date().isBefore(endTime)
+                        && !StringUtils.isEmpty(status))
+                    status = "";
+            }
+
+            HashMap<String, String> map = new HashMap<>();
+            map.put("date", date);
+            map.put("status", status);
+            map.put("type", type);
+            map.put("day", d.dayOfWeekEnum().toChinese("周"));
+            result.add(map);
+        });
+
+        return result;
+    }
 
     /**
      * 发送疫情告警邮件

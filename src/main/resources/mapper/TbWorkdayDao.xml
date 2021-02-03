@@ -20,6 +20,11 @@
         where date = CURRENT_DATE
         limit 1;
     </select>
+    <select id="searchWorkdayInRange" resultType="java.lang.String">
+        select date
+        from tb_workday
+        where date between #{start, jdbcType=VARCHAR} and #{end, jdbcType=VARCHAR};
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
         from tb_workday

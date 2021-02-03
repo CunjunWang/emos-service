@@ -40,4 +40,8 @@ public class Constant {
     public static final String CHECKIN_TOO_EARLY_FOR_ATTENDANCE = "未到上班考勤开始时间";
     public static final String CHECKIN_TOO_LATE_FOR_ATTENDANCE = "超出了上班考勤结束时间";
     public static final String CHECKIN_OK_TO_CHECKIN = "可以考勤";
+
+    public static final String CHECKIN_STATUS_ABSENCE = "缺勤";
+    public static final String CHECKIN_STATUS_OK = "正常";
+    public static final String CHECKIN_STATUS_LATE = "迟到";
 }

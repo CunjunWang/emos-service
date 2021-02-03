@@ -38,6 +38,43 @@
         where user_id = #{userId, jdbcType=INTEGER}
           and date = #{today, jdbcType=VARCHAR}
     </select>
+    <select id="selectTodayCheckinByUserId" resultType="java.util.HashMap">
+        select u.name,
+               u.photo,
+               d.dept_name                          as deptName,
+               ck.address,
+               case
+                   when ck.`status` = 1 then '正常'
+                   when ck.`status` = 2 then '迟到'
+                   end                              as status,
+               case
+                   when ck.risk = 1 then '低风险'
+                   when ck.risk = 2 then '中风险'
+                   when ck.risk = 3 then '高风险'
+                   end                              as risk,
+               date_format(ck.create_time, '%H:%i') as checkinTime,
+               ck.date
+        from tb_user u
+                 left join tb_dept d on u.dept_id = d.id
+                 left join tb_checkin ck on u.id = ck.user_id and ck.date = CURRENT_DATE
+        where u.id = #{userId, jdbcType=INTEGER}
+          and u.status = 1;
+    </select>
+    <select id="selectTotalCheckinDaysByUserId" resultType="java.lang.Long">
+        select count(*) as count
+        from tb_checkin ck
+        where ck.user_id = #{userId, jdbcType=INTEGER};
+    </select>
+    <select id="selectWeeklyCheckinByUserId" resultType="java.util.HashMap">
+        select cast(ck.date as char) as date,
+               case
+                   when ck.`status` = 1 then '正常'
+                   when ck.`status` = 2 then '迟到'
+                   end               as status
+        from tb_checkin ck
+        where ck.user_id = #{userId, jdbcType=INTEGER}
+          and ck.date between 1 and 2;
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete
         from tb_checkin
