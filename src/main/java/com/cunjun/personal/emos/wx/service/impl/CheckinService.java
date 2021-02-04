@@ -4,10 +4,6 @@ import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateRange;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
 import com.cunjun.personal.emos.wx.common.Constant;
 import com.cunjun.personal.emos.wx.common.SystemConstants;
 import com.cunjun.personal.emos.wx.db.dao.*;
@@ -23,7 +19,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,17 +35,7 @@ import java.util.List;
 @Slf4j
 @Service
 @Scope("prototype")
-@PropertySource(value = {"classpath:application.yml", "classpath:secret.properties"})
 public class CheckinService implements ICheckinService {
-
-    @Value("${emos.face.create-face-model-url}")
-    private String createFaceModelUrl;
-
-    @Value("${emos.face.checkin-url}")
-    private String checkinUrl;
-
-    @Value("${course.api-code}")
-    private String apiCode;
 
     @Value("${emos.checkPandemic}")
     private Boolean checkPandemic;
@@ -59,7 +44,7 @@ public class CheckinService implements ICheckinService {
     private String pandemicRiskUrl;
 
     @Autowired
-    private TbHolidaysDao holidaysDao;
+    private TbCityDao cityDao;
 
     @Autowired
     private TbWorkdayDao workdayDao;
@@ -68,7 +53,7 @@ public class CheckinService implements ICheckinService {
     private TbCheckinDao checkinDao;
 
     @Autowired
-    private TbCityDao cityDao;
+    private TbHolidaysDao holidaysDao;
 
     @Autowired
     private TbFaceModelDao faceModelDao;
@@ -84,6 +69,9 @@ public class CheckinService implements ICheckinService {
 
     @Autowired
     private SystemConstants systemConstants;
+
+    @Autowired
+    private FaceModelService faceModelService;
 
     /**
      * 判定是否是合适的签到时间
@@ -142,28 +130,14 @@ public class CheckinService implements ICheckinService {
         if (now.compareTo(attendanceStart) > 0 && now.compareTo(attendanceEnd) < 0)
             status = Constant.CHECKIN_DB_STATUS_LATE;
 
-        // TODO: 提取下列调用人脸识别接口相关代码到私有方法
         String faceModel = faceModelDao.selectFaceModelByUserId(userId);
         if (faceModel == null) {
             log.warn("不存在员工[{}]的人脸模型", userId);
             throw new EmosException(Constant.FACE_MODEL_NO_CORRESPONDING_MODEL);
         }
-        String path = (String) param.get("path");
-        HttpRequest request = HttpUtil.createPost(checkinUrl);
-        request.form("photo", FileUtil.file(path), "targetModel", faceModel);
-        request.form("code", apiCode);
-        HttpResponse response = request.execute();
-        if (response.getStatus() != 200) {
-            log.error(Constant.FACE_MODEL_SERVICE_ERROR);
-            throw new EmosException(Constant.FACE_MODEL_SERVICE_ERROR);
-        }
-        String body = response.body();
-        if (Constant.FACE_MODEL_CANNOT_RECOGNIZE.equals(body) ||
-                Constant.FACE_MODEL_MULTIPLE_FACES.equals(body))
-            throw new EmosException(body);
-        else if (Constant.FACE_MODEL_RESULT_FALSE.equals(body))
-            throw new EmosException(Constant.CHECKIN_ERROR_NOT_SELF_OPERATION);
-        else if (Constant.FACE_MODEL_RESULT_TRUE.equals(body)) {
+
+        String recognizeResult = faceModelService.checkin((String) param.get("path"), faceModel);
+        if (Constant.FACE_MODEL_RESULT_TRUE.equals(recognizeResult)) {
             TbCheckin record = new TbCheckin();
             record.setUserId(userId);
             record.setAddress((String) param.get("address"));
@@ -196,20 +170,10 @@ public class CheckinService implements ICheckinService {
     @Transactional
     public void createFaceModel(Integer userId, String photoPath) {
         log.info("创建用户[{}]人脸识别模型", userId);
-        HttpRequest request = HttpUtil.createPost(createFaceModelUrl);
-        request.form("photo", FileUtil.file(photoPath));
-        request.form("code", apiCode);
-        HttpResponse response = request.execute();
-        String body = response.body();
-        if (Constant.FACE_MODEL_CANNOT_RECOGNIZE.equals(body) ||
-                Constant.FACE_MODEL_MULTIPLE_FACES.equals(body)) {
-            log.error(body);
-            throw new EmosException(body);
-        }
-        // 创建人脸模型
+        String faceModel = faceModelService.createFaceModel(photoPath);
         TbFaceModel model = new TbFaceModel();
         model.setUserId(userId);
-        model.setFaceModel(body);
+        model.setFaceModel(faceModel);
         faceModelDao.insertSelective(model);
     }
 
@@ -241,8 +205,8 @@ public class CheckinService implements ICheckinService {
         String end = (String) param.get("endDate");
         log.info("查询用户[{}]一周内的签到记录", userId);
         List<HashMap<String, String>> weeklyCheckin = checkinDao.selectWeeklyCheckinByUserId(userId, start, end);
-        List<String> specialHolidaysThisWeek = holidaysDao.searchHolidayInRange(start, end);
-        List<String> specialWorkdaysThisWeek = workdayDao.searchWorkdayInRange(start, end);
+        List<String> holidays = holidaysDao.searchHolidayInRange(start, end);
+        List<String> workdays = workdayDao.searchWorkdayInRange(start, end);
         DateTime startDate = DateUtil.parseDate(start);
         DateTime endDate = DateUtil.parseDate(end);
         DateRange range = DateUtil.range(startDate, endDate, DateField.DAY_OF_MONTH);
@@ -250,29 +214,8 @@ public class CheckinService implements ICheckinService {
         List<HashMap<String, String>> result = new ArrayList<>();
         range.forEach(d -> {
             String date = d.toString("yyyy-MM-dd");
-            String type = Constant.CHECKIN_DAY_WORKDAY;
-            if (d.isWeekend())
-                type = Constant.CHECKIN_DAY_HOLIDAY;
-            if (specialHolidaysThisWeek != null && specialHolidaysThisWeek.contains(date))
-                type = Constant.CHECKIN_DAY_HOLIDAY;
-            else if (specialWorkdaysThisWeek != null && specialWorkdaysThisWeek.contains(date))
-                type = Constant.CHECKIN_DAY_WORKDAY;
-            String status = "";
-            if (type.equals(Constant.CHECKIN_DAY_WORKDAY) && DateUtil.compare(d, DateUtil.date()) <= 0) { // 该日期已经到或者过去了, 查看考勤状态
-                status = Constant.CHECKIN_STATUS_ABSENCE;
-                for (HashMap<String, String> map : weeklyCheckin)
-                    if (map.containsValue(date)) {
-                        status = map.get("status");
-                        break;
-                    }
-                // 若当天考勤还没结束并且该员工还没考勤, 不可以算作旷工
-                DateTime endTime = emosDateUtil.buildDates().get(Constant.DATETIME_ATTENDANCE_END);
-                String today = DateUtil.today();
-                if (date.equals(today) && DateUtil.date().isBefore(endTime)
-                        && !StringUtils.isEmpty(status))
-                    status = "";
-            }
-
+            String type = this.getDayType(d, date, holidays, workdays);
+            String status = this.getCheckinStatus(d, date, type, weeklyCheckin);
             HashMap<String, String> map = new HashMap<>();
             map.put("date", date);
             map.put("status", status);
@@ -280,7 +223,6 @@ public class CheckinService implements ICheckinService {
             map.put("day", d.dayOfWeekEnum().toChinese("周"));
             result.add(map);
         });
-
         return result;
     }
 
@@ -311,6 +253,46 @@ public class CheckinService implements ICheckinService {
             }
         }
         return risk;
+    }
+
+    /**
+     * 获取日期类型
+     */
+    private String getDayType(DateTime d, String date,
+                              List<String> holidays, List<String> workdays) {
+        String type = Constant.CHECKIN_DAY_WORKDAY;
+
+        if (d.isWeekend())
+            type = Constant.CHECKIN_DAY_HOLIDAY;
+        if (holidays != null && holidays.contains(date))
+            type = Constant.CHECKIN_DAY_HOLIDAY;
+        else if (workdays != null && workdays.contains(date))
+            type = Constant.CHECKIN_DAY_WORKDAY;
+
+        return type;
+    }
+
+    /**
+     * 获取考勤状态
+     */
+    private String getCheckinStatus(DateTime d, String date, String type,
+                                    List<HashMap<String, String>> weeklyCheckin) {
+        String status = "";
+        if (type.equals(Constant.CHECKIN_DAY_WORKDAY) && DateUtil.compare(d, DateUtil.date()) <= 0) { // 该日期已经到或者过去了, 查看考勤状态
+            status = Constant.CHECKIN_STATUS_ABSENCE;
+            for (HashMap<String, String> map : weeklyCheckin)
+                if (map.containsValue(date)) {
+                    status = map.get("status");
+                    break;
+                }
+            // 若当天考勤还没结束并且该员工还没考勤, 不可以算作旷工
+            DateTime endTime = emosDateUtil.buildDates().get(Constant.DATETIME_ATTENDANCE_END);
+            String today = DateUtil.today();
+            if (date.equals(today) && DateUtil.date().isBefore(endTime)
+                    && !StringUtils.isEmpty(status))
+                status = "";
+        }
+        return status;
     }
 
 }
