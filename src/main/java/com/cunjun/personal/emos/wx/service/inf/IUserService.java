@@ -2,6 +2,7 @@ package com.cunjun.personal.emos.wx.service.inf;
 
 import com.cunjun.personal.emos.wx.db.pojo.TbUser;
 
+import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -33,4 +34,9 @@ public interface IUserService {
      * 查询用户入职日期
      */
     String searchUserHireDate(Integer userId);
+
+    /**
+     * 查询用户基本信息
+     */
+    HashMap<String, String> searchUserSummary(Integer userId);
 }

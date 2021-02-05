@@ -11,12 +11,10 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -56,6 +54,14 @@ public class UserController {
         return ResultData.ok("用户登录成功")
                 .put(Constant.RETURN_VALUE_TOKEN, token)
                 .put(Constant.RETURN_VALUE_PERMISSIONS, permissionsSet);
+    }
+
+    @RequestMapping(value = "/summary", method = RequestMethod.GET)
+    @ApiOperation(value = "查询用户基本信息")
+    public ResultData searchUserSummary(@RequestHeader("token") String token) {
+        Integer userId = jwtUtil.getUserId(token);
+        HashMap<String, String> res = userService.searchUserSummary(userId);
+        return ResultData.ok("查询用户基本信息成功").put("result", res);
     }
 
     @RequestMapping(method = RequestMethod.POST)

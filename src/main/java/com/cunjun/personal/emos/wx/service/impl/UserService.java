@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -117,6 +118,17 @@ public class UserService implements IUserService {
     public String searchUserHireDate(Integer userId) {
         log.info("查询用户[{}]的入职日期", userId);
         return userDao.searchUserHireDate(userId);
+    }
+
+    /**
+     * 查询用户基本信息
+     *
+     * @param userId
+     */
+    @Override
+    public HashMap<String, String> searchUserSummary(Integer userId) {
+        log.info("查询用户[{}]基本信息", userId);
+        return userDao.searchUserSummary(userId);
     }
 
     /**

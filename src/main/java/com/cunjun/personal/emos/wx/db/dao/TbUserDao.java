@@ -32,4 +32,6 @@ public interface TbUserDao {
     HashMap<String, String> searchNameAndDept(@Param("userId") Integer userId);
 
     String searchUserHireDate(@Param("userId") Integer userId);
+
+    HashMap<String, String> searchUserSummary(@Param("userId") Integer userId);
 }
