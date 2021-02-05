@@ -201,29 +201,18 @@ public class CheckinService implements ICheckinService {
     @Override
     public List<HashMap<String, String>> searchUserWeeklyCheckinResult(HashMap<String, Object> param) {
         Integer userId = (Integer) param.get("userId");
-        String start = (String) param.get("startDate");
-        String end = (String) param.get("endDate");
         log.info("查询用户[{}]一周内的签到记录", userId);
-        List<HashMap<String, String>> weeklyCheckin = checkinDao.selectWeeklyCheckinByUserId(userId, start, end);
-        List<String> holidays = holidaysDao.searchHolidayInRange(start, end);
-        List<String> workdays = workdayDao.searchWorkdayInRange(start, end);
-        DateTime startDate = DateUtil.parseDate(start);
-        DateTime endDate = DateUtil.parseDate(end);
-        DateRange range = DateUtil.range(startDate, endDate, DateField.DAY_OF_MONTH);
+        return this.searchRangeCheckin(param);
+    }
 
-        List<HashMap<String, String>> result = new ArrayList<>();
-        range.forEach(d -> {
-            String date = d.toString("yyyy-MM-dd");
-            String type = this.getDayType(d, date, holidays, workdays);
-            String status = this.getCheckinStatus(d, date, type, weeklyCheckin);
-            HashMap<String, String> map = new HashMap<>();
-            map.put("date", date);
-            map.put("status", status);
-            map.put("type", type);
-            map.put("day", d.dayOfWeekEnum().toChinese("周"));
-            result.add(map);
-        });
-        return result;
+    /**
+     * 查询用户一个月内的签到记录
+     */
+    @Override
+    public List<HashMap<String, String>> searchUserMonthlyCheckinResult(HashMap<String, Object> param) {
+        Integer userId = (Integer) param.get("userId");
+        log.info("查询用户[{}]一个月内的签到记录", userId);
+        return this.searchRangeCheckin(param);
     }
 
     /**
@@ -293,6 +282,35 @@ public class CheckinService implements ICheckinService {
                 status = "";
         }
         return status;
+    }
+
+    /**
+     * 查询用户一段时间内的考勤记录
+     */
+    private List<HashMap<String, String>> searchRangeCheckin(HashMap<String, Object> param) {
+        Integer userId = (Integer) param.get("userId");
+        String start = (String) param.get("startDate");
+        String end = (String) param.get("endDate");
+        List<HashMap<String, String>> weeklyCheckin = checkinDao.selectWeeklyCheckinByUserId(userId, start, end);
+        List<String> holidays = holidaysDao.searchHolidayInRange(start, end);
+        List<String> workdays = workdayDao.searchWorkdayInRange(start, end);
+        DateTime startDate = DateUtil.parseDate(start);
+        DateTime endDate = DateUtil.parseDate(end);
+        DateRange range = DateUtil.range(startDate, endDate, DateField.DAY_OF_MONTH);
+
+        List<HashMap<String, String>> result = new ArrayList<>();
+        range.forEach(d -> {
+            String date = d.toString("yyyy-MM-dd");
+            String type = this.getDayType(d, date, holidays, workdays);
+            String status = this.getCheckinStatus(d, date, type, weeklyCheckin);
+            HashMap<String, String> map = new HashMap<>();
+            map.put("date", date);
+            map.put("status", status);
+            map.put("type", type);
+            map.put("day", d.dayOfWeekEnum().toChinese("周"));
+            result.add(map);
+        });
+        return result;
     }
 
 }

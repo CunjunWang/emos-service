@@ -37,4 +37,10 @@ public interface ICheckinService {
      * 查询用户一周内的签到记录
      */
     List<HashMap<String, String>> searchUserWeeklyCheckinResult(HashMap<String, Object> param);
+
+    /**
+     * 查询用户一个月内的签到记录
+     */
+    List<HashMap<String, String>> searchUserMonthlyCheckinResult(HashMap<String, Object> param);
+
 }

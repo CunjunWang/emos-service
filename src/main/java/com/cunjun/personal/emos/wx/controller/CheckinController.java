@@ -6,6 +6,7 @@ import cn.hutool.core.io.FileUtil;
 import com.cunjun.personal.emos.wx.common.ResultData;
 import com.cunjun.personal.emos.wx.common.SystemConstants;
 import com.cunjun.personal.emos.wx.controller.form.checkin.CheckinForm;
+import com.cunjun.personal.emos.wx.controller.form.checkin.SearchMonthlyCheckinForm;
 import com.cunjun.personal.emos.wx.exception.EmosException;
 import com.cunjun.personal.emos.wx.service.impl.CheckinService;
 import com.cunjun.personal.emos.wx.service.impl.UserService;
@@ -145,6 +146,27 @@ public class CheckinController {
         checkin.put("weeklyCheckin", list);
 
         return ResultData.ok().put("result", checkin);
+    }
+
+    @RequestMapping(value = "/record/searchMonthly", method = RequestMethod.POST)
+    @ApiOperation(value = "查询用户一个月签到数据")
+    public ResultData searchMonthlyCheckin(
+            @Valid @RequestBody SearchMonthlyCheckinForm form,
+            @RequestHeader("token") String token) {
+        Integer userId = jwtUtil.getUserId(token);
+
+        DateTime startDate = emosDateUtil.getMonthlyCheckinStatsStartDate(userId, form);
+        DateTime endDate = DateUtil.endOfMonth(startDate);
+        HashMap<String, Object> param = new HashMap<>();
+        param.put("userId", userId);
+        param.put("startDate", startDate.toString());
+        param.put("endDate", endDate.toString());
+        List<HashMap<String, String>> list = checkinService.searchUserMonthlyCheckinResult(param);
+        HashMap<String, Integer> counts = emosDateUtil.countCheckin(list);
+
+        return ResultData.ok("查询月考勤信息成功")
+                .put("list", list)
+                .put("counts", counts);
     }
 
 }
